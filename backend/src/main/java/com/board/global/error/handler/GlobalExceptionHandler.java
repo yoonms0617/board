@@ -5,6 +5,7 @@ import com.board.global.error.exception.BaseException;
 import com.board.global.error.exception.ErrorType;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -16,6 +17,13 @@ public class GlobalExceptionHandler {
         ErrorType errorType = e.getErrorType();
         ErrorResponse errorResponse = ErrorResponse.of(errorType);
         return ResponseEntity.status(errorType.getStatus()).body(errorResponse);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException() {
+        ErrorType errorType = ErrorType.INVALID_INPUT_VALUE;
+        ErrorResponse errorResponse = ErrorResponse.of(errorType);
+        return ResponseEntity.badRequest().body(errorResponse);
     }
 
 }
