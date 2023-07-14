@@ -1,6 +1,14 @@
 package com.board.global.security.util;
 
+import com.board.global.security.exception.ExpiredTokenException;
+import com.board.global.security.exception.InvalidTokenException;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
@@ -39,6 +47,38 @@ public class JwtUtil {
                 .setExpiration(exp)
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public Claims getPayload(String token) {
+        return getClaims(token).getBody();
+    }
+
+    public void validateToken(String token) {
+        try {
+            Jws<Claims> claims = getClaims(token);
+            checkExpireToken(claims.getBody());
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new InvalidTokenException();
+        }
+    }
+
+    private Jws<Claims> getClaims(String token) {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token);
+        } catch (IllegalArgumentException | MalformedJwtException e) {
+            throw new InvalidTokenException();
+        } catch (ExpiredJwtException e) {
+            throw new ExpiredTokenException();
+        }
+    }
+
+    private void checkExpireToken(Claims body) {
+        if (body.getExpiration().before(new Date())) {
+            throw new ExpiredTokenException();
+        }
     }
 
 }
